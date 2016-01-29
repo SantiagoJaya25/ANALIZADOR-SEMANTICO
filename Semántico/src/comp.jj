@@ -1,0 +1,415 @@
+PARSER_BEGIN(comp)
+import java.io.*;
+class comp 
+{
+	public static void main( String[] args )throws ParseException, Exception
+	{
+		try
+		{
+		    File fe = new File("code.txt");
+			BufferedReader entrada;
+
+			entrada = new BufferedReader(new FileReader(fe));
+		
+     		comp analizador = new comp(entrada) ;
+			analizador.Programa();
+			System.out.println("\tAnalizador ha terminado.");
+				
+		}
+		catch(ParseException e)
+		{
+			System.out.println(e.getMessage());
+			System.out.println("\tAnalizador ha terminado.");
+		}
+
+		TokenAsignaciones.visualizarTablas();
+	}
+}
+PARSER_END(comp)
+
+TOKEN : 
+{ 
+	  <IGUAL : "=">  //1
+	| <MAS : "+" >  //2
+	| <MENOS:"-">  //3
+	| <POR:"*"> //4
+	| <DIVIDE:"/">  //5
+	
+}
+TOKEN:
+{
+	  <PUBLIC: "public"> //6
+	| <PRIVATE: "private"> //7
+	| <STATIC: "static"> //8
+	| <VOID: "void"> //9
+	| <MAIN: "public static void Main()"> //10
+	| <PROGRAMA: "Programa" >  //11
+	| <IF: "if" > //12
+	| <THEN:"then" > //13
+	| <ELSE:"else" > //14
+	| <DO:"do" > //15
+	| <WHILE:"while" > //16
+	| <WRITE:"output" > //17
+	| <READ:"input" > //18
+	| <RETURN:"return" > //19
+	
+}
+TOKEN:
+{
+      <PARIZQ: "(" > //20
+	| <PARDER: ")" > //21
+	| <LLAVEIZQ: "{" > //22
+	| <LLAVEDER: "}" > //23
+	| <CORIZQ: "[" > //24
+	| <CORDER: "]" > //25
+	| <PUNTOYCOMA: ";" > //26
+	| <COMA: "," > //27
+	| <COMILLAS: "\""> //28
+	| <EXCLAMACION: "!"> //29
+	| <AMP: "&"> //30
+	| <DINERO: "$"> //31
+}
+TOKEN:
+{
+	  <IGUALIGUAL: "==" > //32
+	| <MENORIGUAL: "<=" > //33
+	| <MENOR: "<" > //34
+	| <MAYORIGUAL: ">=" > //35
+	| <MAYOR: ">" > //36
+	| <DIFERENTE: "!=" > //37
+	| <OR: "||" > //38
+	| <AND: "&&"> //39
+}
+
+TOKEN:
+{
+	  <INT:"int"> //40
+	| <FLOAT: "float"> //41
+	| <CHAR: "char"> //42
+	| <STRING: "string"> //43
+	| <BOOL: "bool"> //44
+	| <NUMERO : ("-")?(["1"-"9"])+ | "0">  //45
+	| <IDENTIFICADOR : ["a"-"z","A"-"Z"](["a"-"z","A"-"Z","0"-"9","_"])*>  //46
+	| <DECIMAL : <NUMERO>["."](["0"-"9"])+ > //47
+	| <CADENA : <COMILLAS>(~[])*<COMILLAS>> //48
+	| <CARACTER : "'"(~[])"'" >//49
+	| <DOSPUNTOS : ":"> //50
+	| <BOOLEANO : "true" | "false"> //51
+}
+
+SKIP : 
+{ 
+	" "|"\n" | "\r" | "\r\n" | "\t"
+	//ignora comentarios
+	|  <"//" (~["\n","\r"])* ("\n" | "\r" | "\r\n")>
+  	|  <"/*" (~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")* "/">
+}
+
+void Programa() :
+{}
+{
+	<PROGRAMA><IDENTIFICADOR><LLAVEIZQ>Cuerpo()<LLAVEDER><EOF>	
+}
+void Cuerpo():
+{
+  TokenAsignaciones.SetTables();	
+  }
+{
+(VariablesGlobales())* Principal() (ImplementacionFunciones())* 
+} 
+
+void VariablesGlobales():
+{}
+{
+ var()( vector()|declare()|funcion() )	  
+}
+
+void vector():
+{}
+{
+<CORIZQ> <NUMERO> <CORDER> <PUNTOYCOMA>
+}
+
+void declare():
+{}
+{
+(<COMA><IDENTIFICADOR>)* <PUNTOYCOMA>
+}
+
+//declaracion de las Funciones
+void funcion():
+{}
+{
+ <PARIZQ>parametros() <PARDER>< PUNTOYCOMA >   	
+}
+void var():
+{
+  int td;
+  Token var;	
+}
+{    (TiposDatos())
+	{
+	  td = token.kind;
+	}
+	<DOSPUNTOS> var = <IDENTIFICADOR> 
+	{		
+		TokenAsignaciones.InsertarSimbolo(var, td);
+	}  
+}
+
+void parametros():
+{}
+{ (var()| < COMA > var())*}
+
+//definicin de main
+void Principal():
+{
+	
+}
+{
+	<MAIN>
+	<LLAVEIZQ> Sentencias() <LLAVEDER> 	
+}
+
+
+void TiposDatos():
+{}
+{
+	 <INT>
+	|<FLOAT>
+	|<STRING>
+	|<CHAR>
+	|<BOOL>
+}
+
+// Implementacion de las funciones
+void ImplementacionFunciones():
+{}
+{
+  cabecera() cuerpoFuncion()}
+
+void cabecera():
+{}
+{
+  TiposDatos()  < DOSPUNTOS > < IDENTIFICADOR > < PARIZQ > parametros() < PARDER >  }
+
+void cuerpoFuncion():
+{}
+{
+  < LLAVEIZQ > Sentencias()  < LLAVEDER > }
+void VariablesLocales():
+{
+	int td;
+	Token var;	
+}
+{
+(
+	(TiposDatos())
+	{
+	  td = token.kind;
+	}
+	<DOSPUNTOS> var = <IDENTIFICADOR> 
+	{		
+		TokenAsignaciones.InsertarSimbolo(var, td);
+	} 
+	[VariablesAsignacion(var)]
+	(
+		<COMA>
+		var = <IDENTIFICADOR> 
+		{		
+			TokenAsignaciones.InsertarSimbolo(var, td);
+		} 
+		[VariablesAsignacion(var)]
+	)*	
+	<PUNTOYCOMA> 
+)
+	(VS())
+}
+
+void VariablesAsignacion(Token v1):
+{
+	Token v2;
+	Token v3;
+	String res;	
+	boolean imp = false;
+}
+{
+	<IGUAL>
+	(TiposAsignaciones())
+	  {  
+		v2 = token;
+		res = TokenAsignaciones.checkAsing(v1, v2);
+		
+		if(res != " ")
+		{
+			System.out.println(res);
+			imp = true;
+		}
+	  }
+	  (OpAritmetico()
+	  TiposAsignaciones()
+	  {  
+		v3 = token;
+		res = TokenAsignaciones.checkAsing(v1, v3);
+		
+		if(res != " " && !imp)
+		{
+			System.out.println(res);
+		}
+	  })*
+}
+
+void VS():
+{}
+{
+	LOOKAHEAD(3)VariablesLocales() | Sentencias()
+}
+
+void Sentencias():
+{}
+{
+	(	
+	  VariablesLocales()	
+    | SentenciaIf() 
+	| SentenciaDo()	
+	| LOOKAHEAD(2)SentenciaAsignacion()<PUNTOYCOMA>{TokenAsignaciones.segunda = 0;}
+	| SentenciaWrite()
+	| SentenciaRead()<PUNTOYCOMA>
+	)*
+}
+
+//Sentencia IF
+void SentenciaIf():
+{}
+{
+	<IF><PARIZQ> A() <PARDER> <THEN > <LLAVEIZQ> Sentencias() <LLAVEDER> (Sino())* 
+}
+void Sino():
+{}
+{
+	<ELSE><LLAVEIZQ> Sentencias() <LLAVEDER>
+}
+
+void A():
+{}
+{
+	  Comparaciones() ([(<AND>|<OR>)] Comparaciones())*
+}
+//Fin sentencia if
+
+void Comparaciones():
+{}
+{
+	Valor()Operadores()Valor()
+}
+void Valor():
+{}
+{
+	LOOKAHEAD(2) (<IDENTIFICADOR> | <NUMERO>) | Expresion()
+}
+void Expresion():
+{}
+{
+    LOOKAHEAD(2)(<NUMERO> | <IDENTIFICADOR>)
+	|(<IDENTIFICADOR>|<NUMERO>) OpAritmetico() (<IDENTIFICADOR>|<NUMERO>) 
+}
+
+void Operadores():
+{}
+{
+	    <IGUALIGUAL> 
+	  | <MENORIGUAL> 
+	  | <MAYORIGUAL> 
+	  | <DIFERENTE> 
+	  | <MAYOR> 
+	  | <MENOR> 
+}
+int OpAritmetico():
+{}
+{
+	  (<MAS> {return 1;})
+	| (<MENOS> {return 1;})
+	| (<POR> {return 1;})
+	| (<DIVIDE> {return 1;})
+	| ({return 0;})
+	
+	{return 0;}
+}
+
+
+
+//Sentencia DO
+void SentenciaDo():
+{}
+{
+	<DO> <LLAVEIZQ>Sentencias() <LLAVEDER> <WHILE> <PARIZQ> Comparaciones() <PARDER> <PUNTOYCOMA>
+		
+}
+
+//Sentencia WHILE
+void SentenciaWhile():
+{}
+{
+	<WHILE> <PARIZQ> Comparaciones() <PARDER> <DO> <LLAVEIZQ> Sentencias() <LLAVEDER>
+}
+
+//Sentencia ASIGNACION
+void SentenciaAsignacion():
+{
+	Token v1;
+	Token v2;
+	Token v3;
+	int aux;
+	String res;
+	boolean imp = false;
+}
+{
+  v1 = <IDENTIFICADOR> (<IGUAL>(TiposAsignaciones())
+  {  
+    v2 = token;
+	res = TokenAsignaciones.checkAsing(v1, v2);
+	
+	if(res != " ")
+	{
+		System.out.println(res);
+		imp = true;
+	}
+  }
+  (LOOKAHEAD(2)OpAritmetico()TiposAsignaciones()
+  {  
+    v3 = token;
+	res = TokenAsignaciones.checkAsing(v1, v3);
+	
+	if(res != " " && !imp)
+	{
+		System.out.println(res);
+	}
+  })*  
+  )
+  
+  //SentenciaAsignacion ya trae <PUNTOYCOMA> en el metodo Sentencias()
+}
+void TiposAsignaciones():
+{}
+{
+	  <IDENTIFICADOR> 
+	| <NUMERO> 
+	| <DECIMAL> 
+	| <CADENA> 
+	| <CARACTER>
+}
+
+
+//Sentencia WRITE
+void SentenciaWrite():
+{}
+{
+	<WRITE> <PARIZQ> (Expresion()(<MAS><CADENA>)*|<CADENA>(<MAS>Expresion())*)* <PARDER> <PUNTOYCOMA> 
+}
+
+//Sentencia READ
+void SentenciaRead():
+{}
+{
+	<READ><PARIZQ><PARDER>
+}

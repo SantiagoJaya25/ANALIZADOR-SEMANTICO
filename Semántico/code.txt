@@ -1,0 +1,29 @@
+Programa inicio 
+{
+
+//Declaracion de variables globales
+int : a;
+int : b;    
+int : og[2];  
+char: suma();                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+	public static void Main() 
+	{
+	bool:x=true;
+	bool:x;
+	y=x; 
+	int:a;
+    a=3+2;
+ 	k=suma;
+	}
+char : suma (int:x, float:y)
+{
+int: resultado;
+resultado = x+y;
+}
+	 
+	
+	
+	
+	
+		
+}
