@@ -1,4 +1,4 @@
-Programa inicio 
+Programa Analisis 
 {
 
 //Declaracion de variables globales
